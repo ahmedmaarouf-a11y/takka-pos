@@ -1,70 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
     <meta charset="UTF-8">
     <title>Takka Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background-color: #f8fafc; }
-        .sidebar { width: 250px; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; }
-        .logo-area { padding: 20px; display: flex; align-items: center; gap: 10px; color: white; font-weight: 900; font-size: 22px; border-bottom: 1px solid #1e293b; }
-        .nav-item { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; }
-        .nav-item:hover, .nav-item.active { background: #1e293b; color: white; border-left: 3px solid #38bdf8; }
-        .sub-menu { background: #0b1121; display: none; }
-        .sub-menu.open { display: block; }
-        .sub-item { padding: 10px 20px 10px 40px; cursor: pointer; font-size: 13px; }
-        .sub-item:hover, .sub-item.active { color: #38bdf8; font-weight: bold; }
+        :root { --primary: #0ea5e9; --bg: #f0f9ff; --surface: #ffffff; --text: #0f172a; --border: #e0f2fe; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg); color: var(--text); }
         
-        .main-area { flex: 1; display: flex; flex-direction: column; }
-        .topbar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .status-dot { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; }
-        .dot.processing { background: #f59e0b; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
+        /* القائمة الجانبية باللون الأبيض/الأزرق */
+        .sidebar { width: 260px; background: var(--surface); border-left: 2px solid var(--border); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(14, 165, 233, 0.05); }
+        .logo-area { padding: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary); font-weight: 900; font-size: 24px; border-bottom: 2px solid var(--border); }
+        .logo-area svg { width: 32px; height: 32px; }
+        .nav-item { padding: 16px 24px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: #475569; transition: 0.2s; border-right: 4px solid transparent; }
+        .nav-item:hover { background: var(--bg); color: var(--primary); }
+        .nav-item.active { background: var(--bg); color: var(--primary); border-color: var(--primary); }
         
-        .content { padding: 40px; overflow-y: auto; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: var(--surface); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .btn-outline { background: white; border: 2px solid var(--primary); padding: 8px 16px; border-radius: 8px; color: var(--primary); font-weight: bold; cursor: pointer; }
+        
+        .content { padding: 30px; overflow-y: auto; flex: 1; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header-row h1 { margin: 0; color: var(--text); font-size: 28px; }
         .action-btns { display: flex; gap: 10px; }
-        .btn-gray { background: #64748b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-        .btn-green { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-        .btn-blue { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-green { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-blue { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        .data-area { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; }
+        /* Stats & Charts */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--surface); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(14, 165, 233, 0.05); }
+        .stat-card h3 { color: #64748b; margin: 0 0 10px 0; font-size: 16px; }
+        .stat-card h1 { color: var(--primary); margin: 0; font-size: 36px; font-weight: 900; }
+        .chart-container { background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(14, 165, 233, 0.05); margin-bottom: 30px; height: 300px; }
+        
+        /* Tables */
+        .data-area { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.05); }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; color: #475569; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-area">TAKKA Admin</div>
-        <div class="nav-item active" onclick="switchSection('Overview')">Overview</div>
-        <div class="nav-item" onclick="document.getElementById('sm').classList.toggle('open')">Menu Mgmt ▼</div>
-        <div class="sub-menu open" id="sm">
-            <div class="sub-item" onclick="switchSection('Products')">Products</div>
-            <div class="sub-item" onclick="switchSection('Categories')">Categories</div>
+        <div class="logo-area">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg> TAKKA
         </div>
-        <div class="nav-item" onclick="switchSection('Reports')">Reports</div>
+        <div class="nav-item active" onclick="switchTab('Overview')" id="n-over">نظرة عامة</div>
+        <div class="nav-item" onclick="switchTab('Products')" id="n-prod">المنتجات</div>
+        <div class="nav-item" onclick="switchTab('Categories')" id="n-cat">التصنيفات</div>
+        <div class="nav-item" onclick="switchTab('Reports')" id="n-rep">التقارير</div>
     </div>
 
     <div class="main-area">
         <div class="topbar">
-            <div class="status-dot" id="sys-status"><div class="dot" id="sys-dot"></div> <span id="sys-text">Live Updating</span></div>
-            <button style="background:none; border:1px solid #ddd; padding:5px 15px; border-radius:5px; cursor:pointer" onclick="alert('واجهة الإدارة متوفرة بالإنجليزية لسهولة تصدير البيانات')">العربية</button>
+            <div style="font-weight:bold; color:var(--primary);"> Takka Cloud System</div>
+            <button class="btn-outline" onclick="toggleLang()" id="t-lang">English</button>
         </div>
 
         <div class="content">
             <div class="header-row">
-                <h1 id="page-title">Overview</h1>
+                <h1 id="page-title">نظرة عامة</h1>
                 <div class="action-btns" id="action-buttons"></div>
             </div>
-            <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSVUpload(event)">
+            <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="uploadCSV(event)">
             
-            <div class="data-area" id="data-container">
-                <h2>System Status: Active</h2>
-            </div>
+            <div id="main-container">
+                </div>
         </div>
     </div>
 
@@ -72,109 +79,153 @@
         const SB_URL = "https://rcsssyzajtqwyqzcjglx.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-        let currentSection = 'Overview';
+        
+        let currentTab = 'Overview';
+        let chartInstance = null;
+        let lang = 'ar';
+        
+        const dict = {
+            ar: { over: 'نظرة عامة', prod: 'المنتجات', cat: 'التصنيفات', rep: 'التقارير', lang: 'English', addP: '+ إضافة منتج', addC: '+ إضافة تصنيف', exp: 'تصدير', imp: 'استيراد', sales: 'المبيعات الكلية', orders: 'إجمالي الطلبات', dir: 'rtl' },
+            en: { over: 'Overview', prod: 'Products', cat: 'Categories', rep: 'Reports', lang: 'العربية', addP: '+ Add Product', addC: '+ Add Category', exp: 'Export', imp: 'Import', sales: 'Total Sales', orders: 'Total Orders', dir: 'ltr' }
+        };
 
-        // تغيير حالة النظام
-        function setProcessing(isProcessing) {
-            const dot = document.getElementById('sys-dot');
-            const txt = document.getElementById('sys-text');
-            if(isProcessing) { dot.classList.add('processing'); txt.innerText = 'Processing...'; }
-            else { dot.classList.remove('processing'); txt.innerText = 'Live Updating'; }
+        function toggleLang() {
+            lang = lang === 'ar' ? 'en' : 'ar';
+            document.getElementById('html-root').dir = dict[lang].dir;
+            document.getElementById('n-over').innerText = dict[lang].over;
+            document.getElementById('n-prod').innerText = dict[lang].prod;
+            document.getElementById('n-cat').innerText = dict[lang].cat;
+            document.getElementById('n-rep').innerText = dict[lang].rep;
+            document.getElementById('t-lang').innerText = dict[lang].lang;
+            switchTab(currentTab); // Refresh current view
         }
 
-        function switchSection(section) {
-            currentSection = section;
-            document.getElementById('page-title').innerText = section;
-            document.querySelectorAll('.nav-item, .sub-item').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget?.classList.add('active');
+            
+            // Set Title dynamically based on language
+            const titleMap = { 'Overview': 'over', 'Products': 'prod', 'Categories': 'cat', 'Reports': 'rep' };
+            document.getElementById('page-title').innerText = dict[lang][titleMap[tab]];
             
             const btns = document.getElementById('action-buttons');
-            if(section === 'Products') {
-                btns.innerHTML = `<button class="btn-gray" onclick="document.getElementById('csv-file').click()">Import (CSV)</button> <button class="btn-green" onclick="exportData('products')">Export (CSV)</button> <button class="btn-blue" onclick="addRecord('products')">Add Product</button>`;
-                loadData('products');
-            } else if(section === 'Categories') {
-                btns.innerHTML = `<button class="btn-gray" onclick="document.getElementById('csv-file').click()">Import (CSV)</button> <button class="btn-green" onclick="exportData('categories')">Export (CSV)</button> <button class="btn-blue" onclick="addRecord('categories')">Add Category</button>`;
-                loadData('categories');
-            } else if(section === 'Reports') {
-                btns.innerHTML = `<button class="btn-green" onclick="exportData('sales')">Export Sales</button>`;
-                loadData('sales');
-            } else {
+            const cont = document.getElementById('main-container');
+
+            if(tab === 'Overview') {
                 btns.innerHTML = '';
-                document.getElementById('data-container').innerHTML = '<h2>Select a module from the left.</h2>';
+                renderOverview();
+            } else if (tab === 'Products') {
+                btns.innerHTML = `<button class="btn-green" onclick="document.getElementById('csv-file').click()">${dict[lang].imp}</button> <button class="btn-blue" onclick="promptAdd('products')">${dict[lang].addP}</button>`;
+                loadTableData('products');
+            } else if (tab === 'Categories') {
+                btns.innerHTML = `<button class="btn-green" onclick="document.getElementById('csv-file').click()">${dict[lang].imp}</button> <button class="btn-blue" onclick="promptAdd('categories')">${dict[lang].addC}</button>`;
+                loadTableData('categories');
+            } else if (tab === 'Reports') {
+                btns.innerHTML = `<button class="btn-green" onclick="exportCSV('sales')">${dict[lang].exp}</button>`;
+                loadTableData('sales');
             }
         }
 
-        async function loadData(table) {
-            setProcessing(true);
-            const { data } = await supabaseClient.from(table).select('*').order('id', {ascending: false});
-            setProcessing(false);
+        async function renderOverview() {
+            const cont = document.getElementById('main-container');
+            cont.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>${dict[lang].sales}</h3><h1 id="o-sales">0</h1></div>
+                    <div class="stat-card"><h3>${dict[lang].orders}</h3><h1 id="o-orders">0</h1></div>
+                </div>
+                <div class="chart-container"><canvas id="salesChart"></canvas></div>
+            `;
             
-            const cont = document.getElementById('data-container');
-            if(!data || data.length === 0) { cont.innerHTML = 'No data.'; return; }
+            const { data } = await supabaseClient.from('sales').select('*').order('created_at', {ascending: true});
+            if(data) {
+                const total = data.reduce((s, o) => s + o.total, 0);
+                document.getElementById('o-sales').innerText = total + (lang==='ar'?' ج':' EGP');
+                document.getElementById('o-orders').innerText = data.length;
 
-            let html = `<table><thead><tr>`;
+                // رسم التشارت
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                const labels = data.slice(-10).map(o => o.order_no);
+                const chartData = data.slice(-10).map(o => o.total);
+                
+                if(chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ label: 'Sales Trend', data: chartData, borderColor: '#0ea5e9', tension: 0.4, fill: true, backgroundColor: 'rgba(14,165,233,0.1)' }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+
+        async function loadTableData(table) {
+            const cont = document.getElementById('main-container');
+            cont.innerHTML = '<p>جاري التحميل...</p>';
+            const { data, error } = await supabaseClient.from(table).select('*').order('id', {ascending: false});
+            
+            if(error) { cont.innerHTML = `<p style="color:red">Error: ${error.message}</p>`; return; }
+            if(!data || !data.length) { cont.innerHTML = '<p>No data found.</p>'; return; }
+
+            let html = `<div class="data-area"><table><thead><tr>`;
             Object.keys(data[0]).forEach(k => { if(k !== 'id') html += `<th>${k}</th>`; });
-            html += `<th>Action</th></tr></thead><tbody>`;
+            if(table !== 'sales') html += `<th>Action</th>`;
+            html += `</tr></thead><tbody>`;
             
             data.forEach(row => {
                 html += `<tr>`;
-                Object.keys(row).forEach(k => { if(k !== 'id') html += `<td>${row[k]}</td>`; });
-                if(table !== 'sales') html += `<td><button onclick="delRecord('${table}', ${row.id})" style="color:red;border:none;background:none;cursor:pointer">Delete</button></td>`;
-                else html += `<td>-</td>`;
+                Object.keys(row).forEach(k => { if(k !== 'id') html += `<td style="font-weight:bold">${row[k]}</td>`; });
+                if(table !== 'sales') html += `<td><button onclick="deleteRecord('${table}', ${row.id})" style="color:white; background:#ef4444; border:none; padding:6px 12px; border-radius:6px; cursor:pointer">X</button></td>`;
                 html += `</tr>`;
             });
-            cont.innerHTML = html + `</tbody></table>`;
+            cont.innerHTML = html + `</tbody></table></div>`;
         }
 
-        async function addRecord(table) {
+        async function promptAdd(table) {
             if(table === 'products') {
-                let name = prompt("Product Name:"); let price = prompt("Price:");
-                if(name && price) await supabaseClient.from(table).insert([{name, price}]);
+                const name = prompt(lang === 'ar' ? "اسم المنتج:" : "Product Name:");
+                const price = prompt(lang === 'ar' ? "السعر:" : "Price:");
+                if(name && price) {
+                    const { error } = await supabaseClient.from(table).insert([{ name, price }]);
+                    if(error) alert("Error: " + error.message); else switchTab(currentTab);
+                }
             } else if (table === 'categories') {
-                let name = prompt("Category Name:");
-                if(name) await supabaseClient.from(table).insert([{name}]);
+                const name = prompt(lang === 'ar' ? "اسم التصنيف:" : "Category Name:");
+                if(name) {
+                    const { error } = await supabaseClient.from(table).insert([{ name }]);
+                    if(error) alert("Error: " + error.message); else switchTab(currentTab);
+                }
             }
-            loadData(table);
         }
 
-        async function delRecord(table, id) {
-            setProcessing(true);
-            await supabaseClient.from(table).delete().eq('id', id);
-            loadData(table);
+        async function deleteRecord(table, id) {
+            if(confirm('Are you sure?')) {
+                await supabaseClient.from(table).delete().eq('id', id);
+                switchTab(currentTab);
+            }
         }
 
-        // --- نظام الـ CSV (تصدير واستيراد) ---
-        async function exportData(table) {
-            setProcessing(true);
+        // CSV Export/Import
+        async function exportCSV(table) {
             const { data } = await supabaseClient.from(table).select('*');
-            setProcessing(false);
-            if(!data || data.length === 0) return alert("لا يوجد بيانات لتصديرها");
-            
-            // تحويل الداتا لـ CSV وتحميلها
+            if(!data) return;
             const csv = Papa.unparse(data);
             const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], {type: "text/csv;charset=utf-8"});
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `${table}_export.csv`;
-            link.click();
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${table}.csv`; link.click();
         }
-
-        function handleCSVUpload(event) {
+        function uploadCSV(event) {
             const file = event.target.files[0];
             if(!file) return;
-            setProcessing(true);
             Papa.parse(file, {
                 header: true, skipEmptyLines: true,
                 complete: async function(results) {
-                    const table = currentSection.toLowerCase();
+                    const table = currentTab.toLowerCase();
                     const { error } = await supabaseClient.from(table).insert(results.data);
-                    setProcessing(false);
-                    if(error) alert("خطأ في الاستيراد: " + error.message);
-                    else { alert("تم رفع البيانات بنجاح!"); loadData(table); }
-                    event.target.value = ''; // Reset file input
+                    if(error) alert("Error: " + error.message); else switchTab(currentTab);
                 }
             });
         }
+
+        // Start
+        setTimeout(() => switchTab('Overview'), 100);
     </script>
 </body>
 </html>
