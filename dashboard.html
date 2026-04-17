@@ -2,81 +2,80 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Takka Dashboard | الإدارة</title>
+    <title>Takka Admin | لوحة الإدارة</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --main-blue: #2563eb; --dark-bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; }
-        body { font-family: system-ui; background: var(--dark-bg); color: var(--text); padding: 40px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        
-        .stats-grid { display: flex; gap: 20px; margin-bottom: 40px; }
-        .stat-card { background: var(--card-bg); padding: 30px; border-radius: 20px; flex: 1; border: 1px solid #334155; text-align: center; box-shadow: 0 10px 15px rgba(0,0,0,0.2); }
-        .stat-card h3 { color: #94a3b8; margin: 0; font-size: 16px; }
-        .stat-card h2 { color: var(--main-blue); font-size: 32px; margin: 10px 0 0 0; }
-
-        table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 15px; overflow: hidden; }
-        th, td { padding: 18px; text-align: right; border-bottom: 1px solid #334155; }
-        th { background: #1e293b; color: var(--main-blue); font-size: 14px; text-transform: uppercase; }
-        tr:hover { background: rgba(37, 99, 235, 0.05); }
-        
-        .badge { padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; }
-        .badge-active { background: #f59e0b; color: #fff; }
-        .badge-done { background: #10b981; color: #fff; }
+        :root { --p: #2563eb; --bg: #020617; --card: #1e293b; }
+        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: white; }
+        .sidebar { width: 240px; background: #000; border-left: 1px solid #334155; padding-top: 20px; }
+        .nav { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #1e293b; }
+        .nav:hover { background: var(--p); }
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .stat-grid { display: flex; gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 12px; flex: 1; text-align: center; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #334155; }
+        input { padding: 10px; border-radius: 5px; border: none; margin-left: 10px; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>لوحة تحكم تاكا 📈</h1>
-        <div id="clock" style="font-size: 20px; color: var(--main-blue);"></div>
+    <div class="sidebar">
+        <h2 style="text-align:center">Takka Admin</h2>
+        <div class="nav" onclick="show('rep')">📊 تقارير المبيعات</div>
+        <div class="nav" onclick="show('prod')">⚙️ إدارة المنيو</div>
     </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><h3>إجمالي مبيعات اليوم</h3><h2 id="today-total">0 ج.م</h2></div>
-        <div class="stat-card"><h3>عدد الطلبات</h3><h2 id="order-count">0</h2></div>
-        <div class="stat-card"><h3>طلبات في المطبخ</h3><h2 id="kitchen-count">0</h2></div>
+    <div class="main">
+        <div id="sec-rep">
+            <h2>تقارير اليوم</h2>
+            <div class="stat-grid">
+                <div class="stat-card">المبيعات: <b id="t-sales">0</b> ج.م</div>
+                <div class="stat-card">الطلبات: <b id="t-count">0</b></div>
+            </div>
+            <table id="sales-table"><thead><tr><th>الطلب</th><th>الأصناف</th><th>الحالة</th><th>السعر</th></tr></thead><tbody id="s-body"></tbody></table>
+        </div>
+        <div id="sec-prod" style="display:none">
+            <h2>إدارة المنيو</h2>
+            <div style="background:var(--card); padding:20px; border-radius:10px; margin-bottom:20px">
+                <input type="text" id="pn" placeholder="اسم الصنف">
+                <input type="number" id="pp" placeholder="السعر">
+                <button onclick="addP()" style="padding:10px; background:var(--p); color:white; border:none; border-radius:5px; cursor:pointer">إضافة صنف</button>
+            </div>
+            <table id="p-table"><thead><tr><th>الصنف</th><th>السعر</th><th>حذف</th></tr></thead><tbody id="p-body"></tbody></table>
+        </div>
     </div>
-
-    <table>
-        <thead>
-            <tr><th>رقم الطلب</th><th>الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>التوقيت</th></tr>
-        </thead>
-        <tbody id="sales-body">
-            </tbody>
-    </table>
 
     <script>
         const SB_URL = "https://rcsssyzajtqwyqzcjglx.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-        async function refreshData() {
-            const { data, error } = await supabaseClient.from('sales').select('*').order('created_at', {ascending: false});
-            if (data) {
-                // تحديث الكروت
-                const total = data.filter(o => o.status === 'Completed').reduce((s, o) => s + o.total, 0);
-                document.getElementById('today-total').innerText = total + " ج.م";
-                document.getElementById('order-count').innerText = data.length;
-                document.getElementById('kitchen-count').innerText = data.filter(o => o.status === 'Active').length;
-
-                // تحديث الجدول
-                document.getElementById('sales-body').innerHTML = data.map(o => `
-                    <tr>
-                        <td><b>#${o.order_no}</b></td>
-                        <td>${o.items}</td>
-                        <td>${o.total} ج.م</td>
-                        <td><span class="badge ${o.status === 'Active' ? 'badge-active' : 'badge-done'}">${o.status === 'Active' ? 'في المطبخ' : 'تم الدفع'}</span></td>
-                        <td>${new Date(o.created_at).toLocaleTimeString('ar-EG')}</td>
-                    </tr>
-                `).join('');
-            }
+        function show(s) {
+            document.getElementById('sec-rep').style.display = s === 'rep' ? 'block' : 'none';
+            document.getElementById('sec-prod').style.display = s === 'prod' ? 'block' : 'none';
+            if(s === 'rep') loadR(); else loadP();
         }
 
-        setInterval(refreshData, 5000); // تحديث كل 5 ثواني
-        refreshData();
+        async function loadR() {
+            const { data } = await supabaseClient.from('sales').select('*').order('created_at', {ascending: false});
+            document.getElementById('t-sales').innerText = data.filter(o => o.status === 'Completed').reduce((s, o) => s + o.total, 0);
+            document.getElementById('t-count').innerText = data.length;
+            document.getElementById('s-body').innerHTML = data.map(o => `<tr><td>${o.order_no}</td><td>${o.items}</td><td>${o.status}</td><td>${o.total}</td></tr>`).join('');
+        }
 
-        // ساعة للمنظرة
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ar-EG'); }, 1000);
+        async function loadP() {
+            const { data } = await supabaseClient.from('products').select('*');
+            document.getElementById('p-body').innerHTML = data.map(p => `<tr><td>${p.name}</td><td>${p.price}</td><td><button onclick="delP(${p.id})" style="color:red; background:none; border:none; cursor:pointer">X</button></td></tr>`).join('');
+        }
+
+        async function addP() {
+            const name = document.getElementById('pn').value;
+            const price = document.getElementById('pp').value;
+            if(name && price) { await supabaseClient.from('products').insert([{name, price}]); loadP(); }
+        }
+
+        async function delP(id) { await supabaseClient.from('products').delete().eq('id', id); loadP(); }
+
+        loadR();
     </script>
 </body>
 </html>
