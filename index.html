@@ -1,76 +1,74 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-tag">
 <head>
     <meta charset="UTF-8">
     <title>Takka POS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f4f7f9; }
-        
-        /* Top Navbar */
         .topbar { background: #ffffff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 20px; color: #0f172a; }
         .logo svg { width: 24px; height: 24px; fill: #2563eb; }
         .top-btns { display: flex; gap: 10px; }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; padding: 8px 15px; border-radius: 6px; color: #475569; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-outline { background: white; border: 1px solid #cbd5e1; padding: 8px 15px; border-radius: 6px; color: #475569; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-outline:hover { background: #f8fafc; }
-
-        /* Main Layout */
-        .main-container { display: flex; flex: 1; overflow: hidden; flex-direction: row-reverse; } /* row-reverse عشان السلة تبقى على الشمال زي الصورة */
         
-        /* Cart Sidebar (Left in your image) */
+        .main-container { display: flex; flex: 1; overflow: hidden; flex-direction: row-reverse; } 
         .sidebar-cart { width: 320px; background: #ffffff; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; }
         .cart-items { flex: 1; padding: 20px; overflow-y: auto; text-align: center; }
-        .empty-cart { color: #000; font-weight: bold; padding-bottom: 10px; border-bottom: 1px dashed #cbd5e1; margin-top: 10px; }
         .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; text-align: right; }
-        
-        /* Checkout Box */
-        .checkout-box { background: #f8fafc; padding: 20px; border-top: 1px solid #e2e8f0; border-radius: 15px 15px 0 0; }
-        .total-row { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-bottom: 15px; color: #000; }
+        .checkout-box { background: #f8fafc; padding: 20px; border-top: 1px solid #e2e8f0; }
+        .total-row { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-bottom: 15px; }
         .action-btns { display: flex; gap: 10px; }
         .btn-pay { flex: 1; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-kitchen { flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* Products Grid */
         .products-area { flex: 1; padding: 20px; overflow-y: auto; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; }
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .card img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
-        .card-title { color: #0f172a; font-weight: 600; font-size: 14px; }
+        .card:hover { border-color: #2563eb; transform: translateY(-3px); }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 500px; max-height: 80vh; overflow-y: auto; }
+        .modal-close { float: left; cursor: pointer; color: red; font-weight: bold; }
+        .modal-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .modal-table th, .modal-table td { border-bottom: 1px solid #ddd; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="topbar">
-        <div class="logo">
-            <svg viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h14v-8h3L12 2z"/></svg> TAKKA
-        </div>
+        <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h14v-8h3L12 2z"/></svg> TAKKA</div>
         <div class="top-btns">
-            <button class="btn-outline">Recent Orders</button>
-            <button class="btn-outline">العربية</button>
-            <button class="btn-outline" onclick="loadProducts()">🔄 تحديث</button>
+            <button class="btn-outline" onclick="showRecentOrders()" id="btn-recent">Recent Orders</button>
+            <button class="btn-outline" onclick="toggleLanguage()" id="btn-lang">English</button>
+            <button class="btn-outline" onclick="loadProducts()" id="btn-refresh">🔄 تحديث</button>
         </div>
     </div>
 
     <div class="main-container">
-        <div class="products-area">
-            <div class="grid" id="menu-grid"></div>
-        </div>
-
+        <div class="products-area"><div class="grid" id="menu-grid"></div></div>
         <div class="sidebar-cart">
-            <div class="cart-items" id="cart-list">
-                <div class="empty-cart">---<br>في انتظار الطلب</div>
-            </div>
+            <div class="cart-items" id="cart-list"></div>
             <div class="checkout-box">
-                <div class="total-row">
-                    <span>Total:</span>
-                    <span><span id="total-val">0</span> ج.م</span>
-                </div>
+                <div class="total-row"><span id="lbl-total">الإجمالي:</span><span><span id="total-val">0</span> ج.م</span></div>
                 <div class="action-btns">
-                    <button class="btn-pay" onclick="sendOrder('Completed')">Pay & Finish</button>
-                    <button class="btn-kitchen" onclick="sendOrder('Active')">To Kitchen</button>
+                    <button class="btn-pay" onclick="sendOrder('Completed')" id="btn-pay">دفع وإنهاء</button>
+                    <button class="btn-kitchen" onclick="sendOrder('Active')" id="btn-kit">للمطبخ</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="modal" id="orders-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('orders-modal').style.display='none'">X</span>
+            <h3 id="lbl-modal-title">الطلبات الأخيرة</h3>
+            <table class="modal-table">
+                <thead><tr><th id="th-order">رقم الطلب</th><th id="th-items">الأصناف</th><th id="th-total">الإجمالي</th></tr></thead>
+                <tbody id="recent-orders-body"></tbody>
+            </table>
         </div>
     </div>
 
@@ -79,50 +77,68 @@
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
         let cart = [];
+        let currentLang = 'ar';
+
+        // نظام تغيير اللغة
+        const translations = {
+            'ar': { recent: 'الطلبات السابقة', lang: 'English', refresh: '🔄 تحديث', empty: 'السلة فارغة', total: 'الإجمالي:', pay: 'دفع وإنهاء', kit: 'للمطبخ', modTitle: 'الطلبات الأخيرة', thOrder: 'الرقم', thItems: 'الأصناف', thTotal: 'الإجمالي', dir: 'rtl' },
+            'en': { recent: 'Recent Orders', lang: 'العربية', refresh: '🔄 Refresh', empty: 'Cart is empty', total: 'Total:', pay: 'Pay & Finish', kit: 'To Kitchen', modTitle: 'Recent Orders', thOrder: 'Order No', thItems: 'Items', thTotal: 'Total', dir: 'ltr' }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            const t = translations[currentLang];
+            document.getElementById('html-tag').dir = t.dir;
+            document.getElementById('btn-recent').innerText = t.recent;
+            document.getElementById('btn-lang').innerText = t.lang;
+            document.getElementById('btn-refresh').innerText = t.refresh;
+            document.getElementById('lbl-total').innerText = t.total;
+            document.getElementById('btn-pay').innerText = t.pay;
+            document.getElementById('btn-kit').innerText = t.kit;
+            document.getElementById('lbl-modal-title').innerText = t.modTitle;
+            document.getElementById('th-order').innerText = t.thOrder;
+            document.getElementById('th-items').innerText = t.thItems;
+            document.getElementById('th-total').innerText = t.thTotal;
+            updateCart();
+        }
 
         async function loadProducts() {
             const { data } = await supabaseClient.from('products').select('*');
             if(data) {
                 document.getElementById('menu-grid').innerHTML = data.map(p => `
                     <div class="card" onclick="addToCart('${p.name}', ${p.price})">
-                        <img src="${p.image_url || 'https://via.placeholder.com/80?text=' + p.name}" alt="صورة">
-                        <div class="card-title">${p.name}</div>
-                        <div style="color:#2563eb; font-weight:bold; margin-top:5px">${p.price} ج</div>
+                        <div style="font-size:24px; margin-bottom:10px">🍔</div>
+                        <div style="font-weight:bold">${p.name}</div>
+                        <div style="color:#2563eb; margin-top:5px">${p.price}</div>
                     </div>
                 `).join('');
             }
         }
 
-        function addToCart(name, price) {
-            cart.push({name, price});
-            updateCart();
-        }
-
+        function addToCart(n, p) { cart.push({n, p}); updateCart(); }
         function updateCart() {
             const list = document.getElementById('cart-list');
-            if(cart.length === 0) {
-                list.innerHTML = '<div class="empty-cart">---<br>في انتظار الطلب</div>';
-                document.getElementById('total-val').innerText = '0';
-                return;
-            }
-            list.innerHTML = cart.map(i => `<div class="cart-item"><span>${i.name}</span><span>${i.price} ج</span></div>`).join('');
-            document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
+            if(cart.length === 0) { list.innerHTML = `<div style="margin-top:20px; font-weight:bold;">${translations[currentLang].empty}</div>`; document.getElementById('total-val').innerText = '0'; return; }
+            list.innerHTML = cart.map((i, idx) => `<div class="cart-item"><span>${i.n}</span><span>${i.p} <button onclick="cart.splice(${idx},1); updateCart()" style="color:red;border:none;background:none;cursor:pointer">X</button></span></div>`).join('');
+            document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.p, 0);
         }
 
-        async function sendOrder(status) {
-            if(cart.length === 0) return alert("السلة فارغة");
-            const total = cart.reduce((s, i) => s + i.price, 0);
-            const items = cart.map(i => i.name).join(', ');
-            
-            const { error } = await supabaseClient.from('sales').insert([{
-                order_no: 'TK-' + Math.floor(1000 + Math.random() * 9000),
-                items: items, total: total, status: status
-            }]);
+        async function sendOrder(st) {
+            if(cart.length === 0) return;
+            const t = cart.reduce((s, i) => s + i.p, 0);
+            const items = cart.map(i => i.n).join(', ');
+            await supabaseClient.from('sales').insert([{ order_no: 'TK-'+Math.floor(Date.now()/1000), items: items, total: t, status: st }]);
+            cart = []; updateCart();
+        }
 
-            if(!error) { cart = []; updateCart(); alert("تم تسجيل الطلب!"); }
+        async function showRecentOrders() {
+            document.getElementById('orders-modal').style.display = 'flex';
+            const { data } = await supabaseClient.from('sales').select('*').order('created_at', {ascending: false}).limit(10);
+            document.getElementById('recent-orders-body').innerHTML = data.map(o => `<tr><td>${o.order_no}</td><td>${o.items}</td><td>${o.total}</td></tr>`).join('');
         }
 
         loadProducts();
+        updateCart();
     </script>
 </body>
 </html>
