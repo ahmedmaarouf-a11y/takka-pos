@@ -2,215 +2,64 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Takka Cloud System | نظام تاكا السحابي</title>
+    <title>Takka POS | نقطة البيع</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #2563eb; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
-        
-        /* القائمة الجانبية */
-        .sidebar { width: 260px; background: #020617; border-left: 1px solid #1e293b; display: flex; flex-direction: column; padding: 20px 0; }
-        .logo { text-align: center; padding: 20px; border-bottom: 1px solid #1e293b; margin-bottom: 20px; }
-        .logo img { width: 80px; filter: drop-shadow(0 0 8px var(--p)); }
-        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-weight: 500; color: #94a3b8; }
-        .nav-item:hover { background: #1e293b; color: var(--accent); }
-        .nav-item.active { background: var(--p); color: white; border-right: 4px solid var(--accent); }
-
-        /* المحتوى الرئيسي */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .view { display: none; padding: 30px; height: 100%; overflow-y: auto; }
-        .view.active { display: block; }
-
-        /* ستايل شاشة الكاشير (POS) */
-        .pos-container { display: flex; gap: 20px; height: calc(100vh - 100px); }
-        .menu-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; align-content: start; }
-        .product-card { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; cursor: pointer; border: 1px solid #334155; transition: 0.2s; }
-        .product-card:hover { border-color: var(--p); transform: translateY(-3px); }
-        .product-card b { display: block; margin-top: 10px; color: var(--accent); }
-        
-        .cart-panel { width: 380px; background: var(--card); border-radius: 15px; display: flex; flex-direction: column; padding: 20px; border: 1px solid #334155; }
-        .cart-items { flex: 1; overflow-y: auto; border-bottom: 1px dashed #334155; margin-bottom: 15px; }
-        .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #0f172a; }
-
-        /* ستايل الجداول والتقارير */
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #334155; }
-        th { background: #111827; color: var(--accent); }
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        :root { --p: #2563eb; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        .sidebar { width: 350px; background: var(--card); border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; }
+        .main { flex: 1; padding: 25px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
+        .p-card { background: #020617; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid #334155; }
+        .p-card:active { transform: scale(0.95); }
+        .p-card b { display: block; color: var(--p); margin-top: 8px; }
+        .cart-items { flex: 1; overflow-y: auto; margin: 20px 0; border-top: 1px solid #334155; padding-top: 10px; }
+        .btn { padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; font-size: 16px; }
+        .btn-k { background: #f59e0b; color: white; }
         .btn-p { background: var(--p); color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
-
-        /* إضافة منتج */
-        .form-group { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
     </style>
 </head>
 <body>
-
-    <div class="sidebar">
-        <div class="logo">
-            <img src="https://via.placeholder.com/100/2563eb/ffffff?text=TK" alt="Logo">
-            <h3 style="margin-top:10px">Takka Cloud</h3>
-        </div>
-        <div class="nav-item active" onclick="showView('pos', this)">🛒 نقطة البيع</div>
-        <div class="nav-item" onclick="showView('kitchen', this)">👨‍🍳 طلبات المطبخ</div>
-        <div class="nav-item" onclick="showView('reports', this)">📊 التقارير والمبيعات</div>
-        <div class="nav-item" onclick="showView('settings', this)">⚙️ إدارة الأصناف</div>
+    <div class="main">
+        <h2 style="border-right: 4px solid var(--p); padding-right: 10px;">المنيو 🌮</h2>
+        <div class="grid" id="menu"></div>
     </div>
-
-    <div class="main-content">
-        <div id="view-pos" class="view active">
-            <div class="pos-container">
-                <div class="menu-grid" id="pos-menu">
-                    </div>
-                <div class="cart-panel">
-                    <h3>الفاتورة الحالية</h3>
-                    <div class="cart-items" id="cart-list"></div>
-                    <div style="font-size: 24px; font-weight: bold; margin: 15px 0;">الإجمالي: <span id="cart-total">0</span> ج.م</div>
-                    <button class="btn btn-p" style="background: #f59e0b;" onclick="checkout('Active')">إرسال للمطبخ</button>
-                    <button class="btn btn-success" style="margin-top:10px" onclick="checkout('Completed')">دفع كاش مباشر</button>
-                    <button class="btn btn-danger" style="margin-top:10px; background: #475569;" onclick="clearCart()">مسح السلة</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-kitchen" class="view">
-            <h2>طلبات المطبخ الحالية 👨‍🍳</h2>
-            <div id="kitchen-orders"></div>
-        </div>
-
-        <div id="view-reports" class="view">
-            <h2>تقارير المبيعات 📊</h2>
-            <div style="display:flex; gap:20px; margin-bottom:20px;">
-                <div style="background:var(--card); padding:20px; border-radius:10px; flex:1">إجمالي اليوم: <b id="rep-total">0</b> ج.م</div>
-                <div style="background:var(--card); padding:20px; border-radius:10px; flex:1">عدد الطلبات: <b id="rep-count">0</b></div>
-            </div>
-            <table>
-                <thead><tr><th>رقم الطلب</th><th>الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>التوقيت</th></tr></thead>
-                <tbody id="rep-table"></tbody>
-            </table>
-        </div>
-
-        <div id="view-settings" class="view">
-            <h2>إدارة المنيو ⚙️</h2>
-            <div style="background:var(--card); padding:20px; border-radius:10px; margin-bottom:30px">
-                <h3>إضافة صنف جديد</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px">
-                    <input type="text" id="new-p-name" placeholder="اسم الصنف">
-                    <input type="number" id="new-p-price" placeholder="السعر">
-                    <button class="btn btn-p" onclick="addProduct()">حفظ الصنف</button>
-                </div>
-            </div>
-            <table>
-                <thead><tr><th>اسم الصنف</th><th>السعر</th><th>إجراء</th></tr></thead>
-                <tbody id="settings-table"></tbody>
-            </table>
-        </div>
+    <div class="sidebar">
+        <h2 style="text-align:center">طلب جديد</h2>
+        <div id="cart" class="cart-items">السلة فارغة</div>
+        <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">الإجمالي: <span id="total">0</span> ج.م</div>
+        <button class="btn btn-k" onclick="send('Active')">إرسال للمطبخ 👨‍🍳</button>
+        <button class="btn btn-p" onclick="send('Completed')">تحصيل كاش 💵</button>
     </div>
 
     <script>
         const SB_URL = "https://rcsssyzajtqwyqzcjglx.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
         let cart = [];
 
-        function showView(id, el) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-'+id).classList.add('active');
-            el.classList.add('active');
-            if(id === 'pos' || id === 'settings') loadProducts();
-            if(id === 'kitchen') loadKitchen();
-            if(id === 'reports') loadReports();
-        }
-
-        // --- وظائف الأصناف ---
-        async function loadProducts() {
+        async function load() {
             const { data } = await supabaseClient.from('products').select('*');
-            if(data) {
-                document.getElementById('pos-menu').innerHTML = data.map(p => `
-                    <div class="product-card" onclick="addToCart('${p.name}', ${p.price})">
-                        <div style="font-size: 1.5em">🍔</div>
-                        <div>${p.name}</div>
-                        <b>${p.price} ج.م</b>
-                    </div>
-                `).join('');
-                document.getElementById('settings-table').innerHTML = data.map(p => `
-                    <tr><td>${p.name}</td><td>${p.price} ج.م</td>
-                    <td><button class="btn btn-danger" onclick="deleteProduct(${p.id})">حذف</button></td></tr>
-                `).join('');
-            }
+            document.getElementById('menu').innerHTML = data.map(p => `
+                <div class="p-card" onclick="add('${p.name}', ${p.price})">🍔<br>${p.name}<b>${p.price}ج</b></div>
+            `).join('');
         }
-
-        async function addProduct() {
-            const name = document.getElementById('new-p-name').value;
-            const price = document.getElementById('new-p-price').value;
-            if(!name || !price) return alert("اكمل البيانات");
-            await supabaseClient.from('products').insert([{ name, price }]);
-            document.getElementById('new-p-name').value = '';
-            document.getElementById('new-p-price').value = '';
-            loadProducts();
+        function add(n, p) { cart.push({n, p}); render(); }
+        function render() {
+            document.getElementById('cart').innerHTML = cart.map(i => `<div>• ${i.n} (${i.p}ج)</div>`).join('');
+            document.getElementById('total').innerText = cart.reduce((a, b) => a + b.p, 0);
         }
-
-        async function deleteProduct(id) {
-            if(confirm("هل أنت متأكد من الحذف؟")) {
-                await supabaseClient.from('products').delete().eq('id', id);
-                loadProducts();
-            }
-        }
-
-        // --- وظائف الكاشير ---
-        function addToCart(n, p) { cart.push({n, p}); renderCart(); }
-        function clearCart() { cart = []; renderCart(); }
-        function renderCart() {
-            const list = document.getElementById('cart-list');
-            list.innerHTML = cart.map(i => `<div class="cart-item"><span>${i.n}</span><span>${i.p}ج.م</span></div>`).join('');
-            document.getElementById('cart-total').innerText = cart.reduce((s, i) => s + i.p, 0);
-        }
-
-        async function checkout(status) {
-            if(!cart.length) return alert("السلة فارغة");
-            const total = cart.reduce((s, i) => s + i.p, 0);
-            const items = cart.map(i => i.n).join(', ');
+        async function send(st) {
+            if(!cart.length) return;
             const { error } = await supabaseClient.from('sales').insert([{
-                order_no: 'TK-' + Math.floor(Math.random()*10000),
-                items, total, status
+                order_no: 'TK-'+Date.now().toString().slice(-5),
+                items: cart.map(i => i.n).join(', '),
+                total: cart.reduce((a, b) => a + b.p, 0),
+                status: st
             }]);
-            if(!error) { alert("تم تسجيل الطلب!"); clearCart(); }
+            if(!error) { alert("تم!"); cart = []; render(); }
         }
-
-        // --- وظائف المطبخ والتقارير ---
-        async function loadKitchen() {
-            const { data } = await supabaseClient.from('sales').select('*').eq('status', 'Active');
-            document.getElementById('kitchen-orders').innerHTML = data.map(o => `
-                <div style="background:var(--card); padding:20px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between">
-                    <div><b>#${o.order_no}</b> - ${o.items}</div>
-                    <button class="btn btn-success" onclick="completeOrder(${o.id})">تم التسليم والتحصيل</button>
-                </div>
-            `).join('');
-        }
-
-        async function completeOrder(id) {
-            await supabaseClient.from('sales').update({ status: 'Completed' }).eq('id', id);
-            loadKitchen();
-        }
-
-        async function loadReports() {
-            const { data } = await supabaseClient.from('sales').select('*').order('created_at', {ascending: false});
-            const total = data.filter(o => o.status === 'Completed').reduce((s, o) => s + o.total, 0);
-            document.getElementById('rep-total').innerText = total;
-            document.getElementById('rep-count').innerText = data.length;
-            document.getElementById('rep-table').innerHTML = data.map(o => `
-                <tr><td>${o.order_no}</td><td>${o.items}</td><td>${o.total}</td>
-                <td>${o.status === 'Active' ? 'المطبخ' : 'تم الدفع'}</td>
-                <td>${new Date(o.created_at).toLocaleTimeString('ar-EG')}</td></tr>
-            `).join('');
-        }
-
-        loadProducts(); // تشغيل أولي
+        load();
     </script>
 </body>
 </html>
