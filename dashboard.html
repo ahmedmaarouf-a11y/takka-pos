@@ -2,87 +2,61 @@
 <html lang="ar" dir="rtl" id="html-root">
 <head>
     <meta charset="UTF-8">
-    <title>Takka Dashboard | الإدارة الاحترافية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Takka Dashboard | لوحة التحكم الاحترافية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #0ea5e9; --bg: #f0f9ff; --surface: #ffffff; --text: #0f172a; --border: #e0f2fe; }
+        /* تعريف الألوان المريحة للعين */
+        :root { --primary: #0084d1; --bg: #f0f9ff; --sidebar-bg: #f8fbfd; --glass: rgba(255, 255, 255, 0.7); --text: #1e293b; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* القائمة الجانبية */
-        .sidebar { width: 260px; background: var(--surface); border-left: 2px solid var(--border); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(14, 165, 233, 0.05); }
-        .logo-area { padding: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary); font-weight: 900; font-size: 24px; border-bottom: 2px solid var(--border); }
+        /* القائمة الجانبية الفخمة باللون الأبيض الشفاف */
+        .sidebar { width: 250px; background: var(--sidebar-bg); border-left: 1px solid rgba(0, 132, 209, 0.1); display: flex; flex-direction: column; }
+        .logo-area { padding: 24px; display: flex; align-items: center; gap: 10px; color: var(--primary); font-weight: 900; font-size: 24px; border-bottom: 1px solid rgba(0, 132, 209, 0.1); }
+        .logo-area svg { width: 30px; height: 30px; }
         .nav-item { padding: 16px 24px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: #475569; transition: 0.2s; border-right: 4px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: var(--bg); color: var(--primary); border-color: var(--primary); }
+        .nav-item:hover, .nav-item.active { background: rgba(0, 132, 209, 0.05); color: var(--primary); border-color: var(--primary); }
         
         .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar { background: var(--surface); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); }
+        /* شريط علوي شفاف */
+        .topbar { background: var(--glass); backdrop-filter: blur(10px); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 132, 209, 0.1); }
+        .status-dot { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px; color: #10b981; }
+        .status-dot span { width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
+        .btn-outline { background: white; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: #4b5563; }
+        
         .content { padding: 30px; overflow-y: auto; flex: 1; }
-        
-        /* النافذة الاحترافية (Modal) */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-card { background: var(--surface); width: 450px; border-radius: 20px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: popUp 0.3s ease-out; }
-        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .modal-card h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #475569; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        .form-group input:focus { border-color: var(--primary); outline: none; }
-        
-        .modal-btns { display: flex; gap: 10px; margin-top: 25px; }
-        .btn-modal-save { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-modal-cancel { flex: 1; background: #f1f5f9; color: #475569; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-
-        /* الأزرار والجداول */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header-row h1 { margin: 0; color: #0f172a; font-size: 24px; }
+        .action-btns { display: flex; gap: 10px; }
+        .btn-green { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-blue { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        th, td { padding: 16px; border-bottom: 1px solid var(--border); text-align: right; }
-        th { background: #f8fafc; color: #475569; }
+        
+        /* Stats & Chart (Matching Image) */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid rgba(0, 132, 209, 0.1); box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .stat-card h3 { color: #64748b; margin: 0 0 10px 0; font-size: 14px; }
+        .stat-card h1 { color: var(--primary); margin: 0; font-size: 32px; font-weight: 900; }
+        
+        /* التشارت الأبيض الشفاف */
+        .chart-container { background: var(--glass); backdrop-filter: blur(10px); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 132, 209, 0.1); margin-bottom: 24px; height: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        
+        /* Tables الشفافة */
+        .data-area { background: var(--glass); border-radius: 12px; border: 1px solid rgba(0, 132, 209, 0.1); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 16px; border-bottom: 1px solid rgba(0, 132, 209, 0.1); }
+        th { background: rgba(0, 132, 209, 0.02); color: #475569; }
     </style>
 </head>
 <body>
 
-    <div class="modal-overlay" id="productModal">
-        <div class="modal-card">
-            <h2 id="m-title-p">إضافة منتج جديد</h2>
-            <div class="form-group">
-                <label id="l-p-name">اسم المنتج</label>
-                <input type="text" id="inp-p-name" placeholder="مثلاً: شاورما دجاج عائلي">
-            </div>
-            <div class="form-group">
-                <label id="l-p-price">السعر (ج.م)</label>
-                <input type="number" id="inp-p-price" placeholder="0.00">
-            </div>
-            <div class="form-group">
-                <label id="l-p-cat">التصنيف</label>
-                <select id="inp-p-category">
-                    </select>
-            </div>
-            <div class="modal-btns">
-                <button class="btn-modal-save" onclick="saveProduct()">حفظ المنتج</button>
-                <button class="btn-modal-cancel" onclick="closeModals()">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="categoryModal">
-        <div class="modal-card">
-            <h2 id="m-title-c">إضافة تصنيف جديد</h2>
-            <div class="form-group">
-                <label id="l-c-name">اسم التصنيف</label>
-                <input type="text" id="inp-c-name" placeholder="مثلاً: مشروبات، ساندوتشات">
-            </div>
-            <div class="modal-btns">
-                <button class="btn-modal-save" onclick="saveCategory()">حفظ التصنيف</button>
-                <button class="btn-modal-cancel" onclick="closeModals()">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
     <div class="sidebar">
-        <div class="logo-area">TAKKA</div>
+        <div class="logo-area">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg> TAKKA
+        </div>
         <div class="nav-item active" onclick="switchTab('Overview')" id="n-over">نظرة عامة</div>
         <div class="nav-item" onclick="switchTab('Products')" id="n-prod">المنتجات</div>
         <div class="nav-item" onclick="switchTab('Categories')" id="n-cat">التصنيفات</div>
@@ -91,15 +65,18 @@
 
     <div class="main-area">
         <div class="topbar">
-            <div style="font-weight:bold; color:var(--primary);">نظام إدارة تاكا السحابي</div>
-            <button class="btn-blue" style="background:none; color:var(--primary); border:1px solid var(--primary)" onclick="toggleLang()" id="t-lang">English</button>
+            <div class="status-dot"><span></span> Live Updating</div>
+            <button class="btn-outline" onclick="toggleLang()" id="t-lang">English</button>
         </div>
+
         <div class="content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+            <div class="header-row">
                 <h1 id="page-title">نظرة عامة</h1>
-                <div id="action-buttons"></div>
+                <div class="action-btns" id="action-buttons"></div>
             </div>
-            <div id="main-container"></div>
+            
+            <div id="main-container">
+                </div>
         </div>
     </div>
 
@@ -109,105 +86,107 @@
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
         
         let currentTab = 'Overview';
+        let chartInstance = null;
         let lang = 'ar';
-
+        
         const dict = {
-            ar: { over: 'نظرة عامة', prod: 'المنتجات', cat: 'التصنيفات', rep: 'التقارير', addP: '+ إضافة منتج', addC: '+ إضافة تصنيف' },
-            en: { over: 'Overview', prod: 'Products', cat: 'Categories', rep: 'Reports', addP: '+ Add Product', addC: '+ Add Category' }
+            ar: { over: 'نظرة عامة', prod: 'المنتجات', cat: 'التصنيفات', rep: 'التقارير', lang: 'English', addP: '+ إضافة منتج', exp: 'تصدير (CSV)', sales: 'إجمالي المبيعات', orders: 'إجمالي الطلبات', empty: 'لا يوجد بيانات.', dir: 'rtl' },
+            en: { over: 'Overview', prod: 'Products', cat: 'Categories', rep: 'Reports', lang: 'العربية', addP: '+ Add Product', exp: 'Export (CSV)', sales: 'Total Sales', orders: 'Total Orders', empty: 'No data.', dir: 'ltr' }
         };
 
-        function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
-
-        async function openProductModal() {
-            document.getElementById('productModal').style.display = 'flex';
-            // سحب التصنيفات عشان نحطها في القائمة المنسدلة
-            const { data } = await supabaseClient.from('categories').select('name');
-            const select = document.getElementById('inp-p-category');
-            if(data) {
-                select.innerHTML = data.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-            }
-        }
-
-        async function saveProduct() {
-            const name = document.getElementById('inp-p-name').value;
-            const price = document.getElementById('inp-p-price').value;
-            const category = document.getElementById('inp-p-category').value;
-            
-            if(!name || !price || !category) return alert("الرجاء ملئ جميع الخانات");
-            
-            const { error } = await supabaseClient.from('products').insert([{ name, price, category }]);
-            if(error) alert("خطأ: " + error.message);
-            else { closeModals(); switchTab('Products'); }
-        }
-
-        function openCategoryModal() { document.getElementById('categoryModal').style.display = 'flex'; }
-
-        async function saveCategory() {
-            const name = document.getElementById('inp-c-name').value;
-            if(!name) return alert("أدخل اسم التصنيف");
-            const { error } = await supabaseClient.from('categories').insert([{ name }]);
-            if(error) alert("خطأ: " + error.message);
-            else { closeModals(); switchTab('Categories'); }
+        function toggleLang() {
+            lang = lang === 'ar' ? 'en' : 'ar';
+            document.getElementById('html-root').dir = dict[lang].dir;
+            document.getElementById('n-over').innerText = dict[lang].over;
+            document.getElementById('n-prod').innerText = dict[lang].prod;
+            document.getElementById('n-cat').innerText = dict[lang].cat;
+            document.getElementById('n-rep').innerText = dict[lang].rep;
+            document.getElementById('t-lang').innerText = dict[lang].lang;
+            switchTab(currentTab); // Refresh view
         }
 
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('page-title').innerText = dict[lang][{ 'Overview': 'over', 'Products': 'prod', 'Categories': 'cat', 'Reports': 'rep' }[tab]];
+            event.currentTarget?.classList.add('active');
+            
+            const titleMap = { 'Overview': 'over', 'Products': 'prod', 'Categories': 'cat', 'Reports': 'rep' };
+            document.getElementById('page-title').innerText = dict[lang][titleMap[tab]];
             const btns = document.getElementById('action-buttons');
 
-            if (tab === 'Products') {
-                btns.innerHTML = `<button class="btn-blue" onclick="openProductModal()">${dict[lang].addP}</button>`;
-                loadTableData('products');
-            } else if (tab === 'Categories') {
-                btns.innerHTML = `<button class="btn-blue" onclick="openCategoryModal()">${dict[lang].addC}</button>`;
-                loadTableData('categories');
-            } else if (tab === 'Overview') {
+            if(tab === 'Overview') {
                 btns.innerHTML = '';
                 renderOverview();
-            } else {
-                btns.innerHTML = '';
+            } else if (tab === 'Reports') {
+                btns.innerHTML = `<button class="btn-green" onclick="exportData('sales')">${dict[lang].exp}</button>`;
                 loadTableData('sales');
+            } else if (tab === 'Products') {
+                btns.innerHTML = `<button class="btn-blue" onclick="promptAdd()">${dict[lang].addP}</button>`;
+                loadTableData('products');
+            }
+        }
+
+        async function renderOverview() {
+            const cont = document.getElementById('main-container');
+            cont.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>${dict[lang].sales}</h3><h1 id="o-sales">0</h1></div>
+                    <div class="stat-card"><h3>${dict[lang].orders}</h3><h1 id="o-orders">0</h1></div>
+                </div>
+                <div class="chart-container"><canvas id="salesChart"></canvas></div>
+            `;
+            
+            const { data } = await supabaseClient.from('sales').select('*').eq('status','Completed').order('created_at', {ascending: true});
+            if(data) {
+                const total = data.reduce((s, o) => s + o.total, 0);
+                document.getElementById('o-sales').innerText = total + ' ج';
+                document.getElementById('o-orders').innerText = data.length;
+
+                // رسم التشارت المطابق للصورة (النسخة الأبيض الشفافة)
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                const labels = data.slice(-10).map(o => o.order_no);
+                const chartData = data.slice(-10).map(o => o.total);
+                
+                if(chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Sales Trend', data: chartData, borderColor: '#0084d1', backgroundColor: 'rgba(0,132,209,0.05)', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                });
             }
         }
 
         async function loadTableData(table) {
             const cont = document.getElementById('main-container');
-            const { data, error } = await supabaseClient.from(table).select('*').order('id', {ascending: false});
-            if(error) { cont.innerHTML = `<p style="color:red">Error: ${error.message}</p>`; return; }
-            
-            let html = `<table><thead><tr>`;
-            if(data[0]) Object.keys(data[0]).forEach(k => { if(k !== 'id') html += `<th>${k}</th>`; });
-            html += `<th>إجراء</th></tr></thead><tbody>`;
+            const { data } = await supabaseClient.from(table).select('*').order('id', {ascending: false});
+            if(!data || !data.length) { cont.innerHTML = `<p>${dict[lang].empty}</p>`; return; }
+
+            let html = `<div class="data-area"><table><thead><tr>`;
+            Object.keys(data[0]).forEach(k => { if(k !== 'id') html += `<th>${k}</th>`; });
+            if(table !== 'sales') html += `<th>إجراء</th>`;
+            html += `</tr></thead><tbody>`;
             data.forEach(row => {
                 html += `<tr>`;
-                Object.keys(row).forEach(k => { if(k !== 'id') html += `<td>${row[k]}</td>`; });
-                html += `<td><button onclick="deleteRecord('${table}', ${row.id})" style="color:red; border:none; background:none; cursor:pointer">حذف</button></td></tr>`;
+                Object.keys(row).forEach(k => { if(k !== 'id') html += `<td style="font-weight:bold">${row[k]}</td>`; });
+                if(table !== 'sales') html += `<td><button onclick="deleteRow('${table}', ${row.id})" style="color:red;background:none;border:none;cursor:pointer">X</button></td>`;
+                html += `</tr>`;
             });
-            cont.innerHTML = html + `</tbody></table>`;
+            cont.innerHTML = html + `</tbody></table></div>`;
         }
 
-        async function deleteRecord(table, id) {
-            if(confirm("هل أنت متأكد؟")) {
-                await supabaseClient.from(table).delete().eq('id', id);
-                switchTab(currentTab);
+        async function promptAdd() {
+            let name = prompt("اسم المنتج:"); let price = prompt("السعر:");
+            if(name && price) {
+                await supabaseClient.from('products').insert([{ name, price }]);
+                loadTableData('products');
             }
         }
 
-        async function renderOverview() {
-            const { data } = await supabaseClient.from('sales').select('*');
-            document.getElementById('main-container').innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                    <div style="background:white; padding:30px; border-radius:20px; border:2px solid var(--border)">
-                        <h3>إجمالي المبيعات</h3>
-                        <h1 style="color:var(--primary)">${data ? data.reduce((s,o)=>s+o.total,0) : 0} ج.م</h1>
-                    </div>
-                    <div style="background:white; padding:30px; border-radius:20px; border:2px solid var(--border)">
-                        <h3>عدد الطلبات</h3>
-                        <h1 style="color:var(--primary)">${data ? data.length : 0}</h1>
-                    </div>
-                </div>
-            `;
+        async function deleteRow(table, id) {
+            if(confirm("هل أنت متأكد؟")) {
+                await supabaseClient.from(table).delete().eq('id', id);
+                loadTableData(table);
+            }
         }
 
         switchTab('Overview');
