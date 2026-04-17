@@ -2,85 +2,75 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Takka POS | نقطة البيع</title>
+    <title>Takka POS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f3f4f6; --surface: #ffffff; --text: #1f2937; --border: #e5e7eb; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg); color: var(--text); overflow: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f4f7f9; }
         
-        /* منطقة المنيو */
-        .main-area { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; }
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
-        .card { background: var(--surface); padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.2s; }
-        .card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(37,99,235,0.15); }
-        .card-icon { font-size: 2.5rem; margin-bottom: 10px; }
-        .card-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-        .card-price { color: var(--primary); font-weight: 800; font-size: 1.2rem; }
+        /* Top Navbar */
+        .topbar { background: #ffffff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 20px; color: #0f172a; }
+        .logo svg { width: 24px; height: 24px; fill: #2563eb; }
+        .top-btns { display: flex; gap: 10px; }
+        .btn-outline { background: white; border: 1px solid #cbd5e1; padding: 8px 15px; border-radius: 6px; color: #475569; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-outline:hover { background: #f8fafc; }
 
-        /* منطقة السلة (الشريط الجانبي) */
-        .sidebar { width: 380px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: -4px 0 15px rgba(0,0,0,0.03); z-index: 10;}
-        .brand { padding: 20px; text-align: center; background: #1e293b; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        /* Main Layout */
+        .main-container { display: flex; flex: 1; overflow: hidden; flex-direction: row-reverse; } /* row-reverse عشان السلة تبقى على الشمال زي الصورة */
         
-        /* اللوجو المرسوم بالكود SVG - لا يكسر أبدًا */
-        .logo-svg { width: 60px; height: 60px; margin-bottom: 10px; }
+        /* Cart Sidebar (Left in your image) */
+        .sidebar-cart { width: 320px; background: #ffffff; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; }
+        .cart-items { flex: 1; padding: 20px; overflow-y: auto; text-align: center; }
+        .empty-cart { color: #000; font-weight: bold; padding-bottom: 10px; border-bottom: 1px dashed #cbd5e1; margin-top: 10px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; text-align: right; }
         
-        .cart-container { flex: 1; padding: 20px; overflow-y: auto; }
-        .cart-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed var(--border); font-size: 1.1rem; }
-        .cart-item-name { font-weight: 600; }
-        .cart-item-price { color: #4b5563; font-weight: bold;}
-        
-        .checkout-area { padding: 20px; background: #f9fafb; border-top: 1px solid var(--border); }
-        .total-row { display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: 900; margin-bottom: 20px; color: #111827; }
-        
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
-        .btn:active { transform: scale(0.98); }
-        .btn-kitchen { background: #f59e0b; color: white; }
-        .btn-kitchen:hover { background: #d97706; }
-        .btn-cash { background: #10b981; color: white; }
-        .btn-cash:hover { background: #059669; }
-        .btn-clear { background: #ef4444; color: white; margin-bottom: 0; }
-        .btn-clear:hover { background: #dc2626; }
+        /* Checkout Box */
+        .checkout-box { background: #f8fafc; padding: 20px; border-top: 1px solid #e2e8f0; border-radius: 15px 15px 0 0; }
+        .total-row { display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-bottom: 15px; color: #000; }
+        .action-btns { display: flex; gap: 10px; }
+        .btn-pay { flex: 1; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-kitchen { flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* Products Grid */
+        .products-area { flex: 1; padding: 20px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .card img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+        .card-title { color: #0f172a; font-weight: 600; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="main-area">
-        <div class="header">
-            <h1 style="margin: 0; color: var(--primary);">نقطة البيع (POS)</h1>
-            <span style="color: #6b7280; font-weight: bold;">تاكا سيستم</span>
+    <div class="topbar">
+        <div class="logo">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h14v-8h3L12 2z"/></svg> TAKKA
         </div>
-        <div class="grid" id="menu-grid">
-            <p style="text-align: center; grid-column: 1 / -1; color: #6b7280;">جاري تحميل المنيو...</p>
+        <div class="top-btns">
+            <button class="btn-outline">Recent Orders</button>
+            <button class="btn-outline">العربية</button>
+            <button class="btn-outline" onclick="loadProducts()">🔄 تحديث</button>
         </div>
     </div>
 
-    <div class="sidebar">
-        <div class="brand">
-            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path>
-                <path d="M7 2v20"></path>
-                <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path>
-            </svg>
-            <h2 style="margin: 0; font-letter-spacing: 2px;">TAKKA</h2>
-        </div>
-        
-        <div class="cart-container" id="cart-list">
-            <div style="text-align: center; color: #9ca3af; margin-top: 50px;">
-                <svg style="width: 50px; margin-bottom: 10px; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <p>السلة فارغة، ابدأ بإضافة الأصناف</p>
-            </div>
+    <div class="main-container">
+        <div class="products-area">
+            <div class="grid" id="menu-grid"></div>
         </div>
 
-        <div class="checkout-area">
-            <div class="total-row">
-                <span>الإجمالي:</span>
-                <span><span id="total-price">0</span> ج.م</span>
+        <div class="sidebar-cart">
+            <div class="cart-items" id="cart-list">
+                <div class="empty-cart">---<br>في انتظار الطلب</div>
             </div>
-            <button class="btn btn-kitchen" onclick="submitOrder('Active')">👨‍🍳 إرسال للمطبخ</button>
-            <button class="btn btn-cash" onclick="submitOrder('Completed')">💵 دفع كاش مباشر</button>
-            <button class="btn btn-clear" onclick="clearCart()">🗑️ مسح السلة</button>
+            <div class="checkout-box">
+                <div class="total-row">
+                    <span>Total:</span>
+                    <span><span id="total-val">0</span> ج.م</span>
+                </div>
+                <div class="action-btns">
+                    <button class="btn-pay" onclick="sendOrder('Completed')">Pay & Finish</button>
+                    <button class="btn-kitchen" onclick="sendOrder('Active')">To Kitchen</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -88,84 +78,51 @@
         const SB_URL = "https://rcsssyzajtqwyqzcjglx.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
         let cart = [];
 
-        async function fetchProducts() {
-            const { data, error } = await supabaseClient.from('products').select('*');
-            const grid = document.getElementById('menu-grid');
-            if (error || !data.length) {
-                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">لا يوجد أصناف، يرجى إضافتها من لوحة الإدارة.</p>';
-                return;
+        async function loadProducts() {
+            const { data } = await supabaseClient.from('products').select('*');
+            if(data) {
+                document.getElementById('menu-grid').innerHTML = data.map(p => `
+                    <div class="card" onclick="addToCart('${p.name}', ${p.price})">
+                        <img src="${p.image_url || 'https://via.placeholder.com/80?text=' + p.name}" alt="صورة">
+                        <div class="card-title">${p.name}</div>
+                        <div style="color:#2563eb; font-weight:bold; margin-top:5px">${p.price} ج</div>
+                    </div>
+                `).join('');
             }
-            grid.innerHTML = data.map(p => `
-                <div class="card" onclick="addToCart('${p.name}', ${p.price})">
-                    <div class="card-icon">🍔</div>
-                    <div class="card-title">${p.name}</div>
-                    <div class="card-price">${p.price} ج</div>
-                </div>
-            `).join('');
         }
 
         function addToCart(name, price) {
             cart.push({name, price});
-            updateCartUI();
+            updateCart();
         }
 
-        function clearCart() {
-            cart = [];
-            updateCartUI();
-        }
-
-        function updateCartUI() {
+        function updateCart() {
             const list = document.getElementById('cart-list');
-            if (cart.length === 0) {
-                list.innerHTML = `<div style="text-align: center; color: #9ca3af; margin-top: 50px;"><p>السلة فارغة، ابدأ بإضافة الأصناف</p></div>`;
-                document.getElementById('total-price').innerText = "0";
+            if(cart.length === 0) {
+                list.innerHTML = '<div class="empty-cart">---<br>في انتظار الطلب</div>';
+                document.getElementById('total-val').innerText = '0';
                 return;
             }
-            list.innerHTML = cart.map(i => `
-                <div class="cart-item">
-                    <span class="cart-item-name">${i.name}</span>
-                    <span class="cart-item-price">${i.price} ج.م</span>
-                </div>
-            `).join('');
-            document.getElementById('total-price').innerText = cart.reduce((sum, item) => sum + item.price, 0);
+            list.innerHTML = cart.map(i => `<div class="cart-item"><span>${i.name}</span><span>${i.price} ج</span></div>`).join('');
+            document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
         }
 
-        async function submitOrder(status) {
-            if (cart.length === 0) return alert("الرجاء إضافة أصناف للسلة أولاً!");
+        async function sendOrder(status) {
+            if(cart.length === 0) return alert("السلة فارغة");
+            const total = cart.reduce((s, i) => s + i.price, 0);
+            const items = cart.map(i => i.name).join(', ');
             
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            const itemsText = cart.map(i => i.name).join(', ');
-            const orderNumber = 'TK-' + Math.floor(1000 + Math.random() * 9000); // توليد رقم طلب عشوائي
-            
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "جاري الإرسال...";
-            btn.disabled = true;
-
             const { error } = await supabaseClient.from('sales').insert([{
-                order_no: orderNumber,
-                items: itemsText,
-                total: total,
-                status: status,
-                order_type: 'Dine-in'
+                order_no: 'TK-' + Math.floor(1000 + Math.random() * 9000),
+                items: items, total: total, status: status
             }]);
 
-            btn.innerText = originalText;
-            btn.disabled = false;
-
-            if (!error) {
-                alert(`تم تسجيل الطلب رقم: ${orderNumber} بنجاح!`);
-                clearCart();
-            } else {
-                alert("حدث خطأ: " + error.message);
-            }
+            if(!error) { cart = []; updateCart(); alert("تم تسجيل الطلب!"); }
         }
 
-        // تشغيل أول ما الصفحة تفتح
-        fetchProducts();
+        loadProducts();
     </script>
 </body>
 </html>
