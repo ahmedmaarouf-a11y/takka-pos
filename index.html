@@ -3,89 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Takka POS | نقطة البيع الاحترافية</title>
+    <title>Takka POS | Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* تعريف الألوان المريحة للعين */
-        :root { --primary: #0084d1; --bg-glass: rgba(255, 255, 255, 0.9); --text: #1e293b; --accent: #f59e0b; }
-        
-        body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            margin: 0; display: flex; flex-direction: column; height: 100vh; 
-            /* الخلفية المريحة للعين اللي طلبتها */
-            background-color: #f0f9ff;
-            background-image: radial-gradient(#bae6fd 0.5px, #f0f9ff 0.5px);
-            background-size: 10px 10px;
-            color: var(--text); overflow: hidden;
+        :root {
+            --primary: #0ea5e9;
+            --secondary: #0284c7;
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #f0fdfa 100%);
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --text: #1e293b;
         }
 
-        /* الشريط العلوي الشفاف */
-        .topbar { 
-            background: var(--bg-glass); backdrop-filter: blur(10px); 
-            padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid rgba(0, 132, 209, 0.1); box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        body {
+            margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg-gradient); background-attachment: fixed;
+            height: 100vh; display: flex; flex-direction: column; color: var(--text);
+            overflow: hidden;
         }
-        .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; color: var(--primary); }
-        .logo svg { width: 28px; height: 28px; }
-        .top-btns { display: flex; gap: 10px; }
-        .btn-outline { background: white; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; color: #4b5563; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-sync { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
-        .main-container { display: flex; flex: 1; overflow: hidden; } 
-        
-        /* السلة الشفافة الفخمة */
-        .sidebar-cart { width: 350px; background: var(--bg-glass); backdrop-filter: blur(10px); display: flex; flex-direction: column; border-left: 1px solid rgba(0, 132, 209, 0.1); }
-        .cart-header { padding: 20px; border-bottom: 1px solid rgba(0, 132, 209, 0.1); font-size: 18px; font-weight: bold; color: var(--primary); }
-        .cart-items { flex: 1; padding: 15px; overflow-y: auto; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; }
-        
-        .checkout-box { padding: 20px; border-top: 1px solid rgba(0, 132, 209, 0.1); background: rgba(255, 255, 255, 0.5); }
-        .total-row { display: flex; justify-content: space-between; font-weight: 900; font-size: 22px; margin-bottom: 15px; }
-        .action-btns { display: flex; gap: 10px; }
-        .btn-pay { flex: 1; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .btn-kitchen { flex: 1; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        /* شريط علوي زجاجي */
+        .topbar {
+            background: var(--glass); backdrop-filter: blur(10px);
+            padding: 15px 30px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--glass-border); box-shadow: var(--shadow);
+            z-index: 10;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 26px; color: #0369a1; letter-spacing: 1px;}
+        .logo-svg { width: 40px; height: 40px; }
 
-        /* منطقة المنتجات الشفافة */
-        .products-area { flex: 1; padding: 20px; overflow-y: auto; background: rgba(240, 249, 255, 0.6); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .card { background: var(--bg-glass); border: 1px solid rgba(0, 132, 209, 0.05); border-radius: 15px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .card:hover { border-color: var(--primary); transform: translateY(-3px); }
-        .card-icon { font-size: 30px; margin-bottom: 8px; }
-        .card-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-        .card-price { color: var(--primary); font-weight: 800; font-size: 16px; }
+        .top-btns { display: flex; gap: 12px; }
+        .btn-top {
+            background: white; border: 1px solid var(--glass-border); padding: 10px 20px;
+            border-radius: 12px; cursor: pointer; font-weight: bold; color: #475569;
+            transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 8px;
+        }
+        .btn-top:hover { transform: translateY(-2px); border-color: var(--primary); color: var(--primary); }
+        .btn-sync { background: var(--primary); color: white; border: none; }
+        .btn-sync:hover { background: var(--secondary); color: white; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; padding: 20px; gap: 20px; }
+
+        /* منطقة المنتجات */
+        .products-section { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
+        
+        /* شريط التصنيفات */
+        .categories-bar { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .cat-tab {
+            background: var(--glass); padding: 12px 25px; border-radius: 50px; cursor: pointer;
+            font-weight: bold; border: 1px solid var(--glass-border); box-shadow: var(--shadow);
+            transition: 0.3s; white-space: nowrap;
+        }
+        .cat-tab:hover { background: white; }
+        .cat-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px; overflow-y: auto; padding-bottom: 20px; align-content: start;
+        }
+        .product-card {
+            background: var(--glass); backdrop-filter: blur(10px);
+            border-radius: 20px; border: 1px solid var(--glass-border); padding: 20px;
+            text-align: center; cursor: pointer; transition: 0.3s; box-shadow: var(--shadow);
+        }
+        .product-card:hover { transform: translateY(-5px); background: white; border-color: var(--primary); }
+        .p-icon { font-size: 40px; margin-bottom: 10px; }
+        .p-name { font-weight: 800; font-size: 16px; margin-bottom: 8px; }
+        .p-price { color: var(--primary); font-weight: 900; font-size: 18px; }
+
+        /* السلة الجانبية */
+        .cart-sidebar {
+            width: 380px; background: var(--glass); backdrop-filter: blur(15px);
+            border-radius: 25px; border: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; box-shadow: var(--shadow); overflow: hidden;
+        }
+        .cart-header { padding: 25px; border-bottom: 1px solid var(--glass-border); font-size: 22px; font-weight: 900; color: #0369a1; display: flex; align-items: center; gap: 10px; }
+        .cart-items { flex: 1; padding: 20px; overflow-y: auto; }
+        .cart-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 15px; margin-bottom: 10px;
+            font-weight: bold; border: 1px solid var(--glass-border);
+        }
+        .btn-remove { color: #ef4444; background: none; border: none; font-size: 20px; font-weight: bold; cursor: pointer; }
+        
+        .checkout-box { padding: 25px; background: rgba(255, 255, 255, 0.4); border-top: 1px solid var(--glass-border); }
+        .total-row { display: flex; justify-content: space-between; font-size: 24px; font-weight: 900; margin-bottom: 20px; }
+        .btn-action {
+            width: 100%; padding: 18px; border-radius: 15px; border: none;
+            font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px;
+        }
+        .btn-action:active { transform: scale(0.98); }
+        .btn-pay { background: var(--primary); color: white; }
+        .btn-pay:hover { background: var(--secondary); }
+        .btn-kit { background: #f59e0b; color: white; }
+        .btn-kit:hover { background: #d97706; }
+        .btn-clear { background: #fff1f2; color: #e11d48; font-size: 16px; padding: 12px; }
     </style>
 </head>
 <body>
 
     <div class="topbar">
         <div class="logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg> 
+            <svg class="logo-svg" viewBox="0 0 100 100">
+                <path d="M25,60 C25,45 35,35 50,35 C55,20 75,20 80,35 C95,35 95,55 85,65 L25,65 Z" fill="#bae6fd"/>
+                <path d="M35,55 L45,65 L75,35" fill="none" stroke="#0ea5e9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             TAKKA
         </div>
         <div class="top-btns">
-            <button class="btn-sync" onclick="syncMenu()" id="t-sync">🔄 مزامنة المنيو</button>
-            <button class="btn-outline" onclick="toggleLang()" id="t-lang">English</button>
+            <button class="btn-top" onclick="alert('سيتم ربطها لاحقاً')">Recent Orders</button>
+            <button class="btn-top" onclick="toggleLang()" id="t-lang">English</button>
+            <button class="btn-top btn-sync" onclick="loadMenu()" id="t-sync">🔄 تحديث المنيو</button>
         </div>
     </div>
 
     <div class="main-container">
-        <div class="sidebar-cart">
-            <div class="cart-header" id="t-cart-title">🛒 السلة الحالية</div>
-            <div class="cart-items" id="cart-list"></div>
-            <div class="checkout-box">
-                <div class="total-row"><span id="t-total">الإجمالي:</span><span style="color:var(--primary)"><span id="total-val">0</span> ج</span></div>
-                <div class="action-btns">
-                    <button class="btn-pay" onclick="checkout('Completed')" id="t-pay">Pay & Finish</button>
-                    <button class="btn-kitchen" onclick="checkout('Active')" id="t-kit">To Kitchen</button>
-                </div>
+        <div class="products-section">
+            <div class="categories-bar" id="cats-container">
+                <div class="cat-tab active" onclick="filterMenu('all')">الكل</div>
+            </div>
+            <div class="grid" id="menu-grid">
+                <p style="text-align:center; grid-column:1/-1; color:#64748b; font-weight:bold;">جاري تحميل الأصناف...</p>
             </div>
         </div>
 
-        <div class="products-area">
-            <div class="grid" id="menu-grid"></div>
+        <div class="cart-sidebar">
+            <div class="cart-header" id="t-cart">🛒 السلة الحالية</div>
+            <div class="cart-items" id="cart-list"></div>
+            <div class="checkout-box">
+                <div class="total-row"><span id="t-total">الإجمالي:</span><span style="color:var(--primary)"><span id="total-val">0</span> ج.م</span></div>
+                <button class="btn-action btn-pay" onclick="checkout('Completed')" id="t-pay">دفع وإنهاء</button>
+                <button class="btn-action btn-kit" onclick="checkout('Active')" id="t-kit">للمطبخ</button>
+                <button class="btn-action btn-clear" onclick="clearCart()" id="t-clear">مسح السلة</button>
+            </div>
         </div>
     </div>
 
@@ -93,57 +144,127 @@
         const SB_URL = "https://rcsssyzajtqwyqzcjglx.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+        
         let cart = [];
+        let allProducts = [];
+        let currentCategory = 'all';
         let lang = 'ar';
+        
         const dict = {
-            ar: { sync: '🔄 مزامنة المنيو', lang: 'English', cartTitle: '🛒 السلة الحالية', total: 'الإجمالي:', pay: 'Pay & Finish', kit: 'To Kitchen', empty: 'السلة فارغة', dir: 'rtl' },
-            en: { sync: '🔄 Sync Menu', lang: 'العربية', cartTitle: '🛒 Current Cart', total: 'Total:', pay: 'Pay & Finish', kit: 'To Kitchen', empty: 'Cart is empty', dir: 'ltr' }
+            ar: { lang: 'English', sync: '🔄 تحديث المنيو', cart: '🛒 السلة الحالية', empty: 'السلة فارغة', total: 'الإجمالي:', pay: 'دفع وإنهاء', kit: 'للمطبخ', clear: 'مسح السلة', all: 'الكل', dir: 'rtl', curr: 'ج.م' },
+            en: { lang: 'العربية', sync: '🔄 Sync Menu', cart: '🛒 Current Cart', empty: 'Cart is empty', total: 'Total:', pay: 'Pay & Finish', kit: 'To Kitchen', clear: 'Clear Cart', all: 'All', dir: 'ltr', curr: 'EGP' }
         };
 
         function toggleLang() {
             lang = lang === 'ar' ? 'en' : 'ar';
-            document.getElementById('html-root').dir = dict[lang].dir;
-            document.getElementById('t-sync').innerText = dict[lang].sync;
-            document.getElementById('t-lang').innerText = dict[lang].lang;
-            document.getElementById('t-cart-title').innerText = dict[lang].cartTitle;
-            document.getElementById('t-total').innerText = dict[lang].total;
-            renderCart();
+            const t = dict[lang];
+            document.getElementById('html-root').dir = t.dir;
+            document.getElementById('t-lang').innerText = t.lang;
+            document.getElementById('t-sync').innerText = t.sync;
+            document.getElementById('t-cart').innerText = t.cart;
+            document.getElementById('t-total').innerText = t.total;
+            document.getElementById('t-pay').innerText = t.pay;
+            document.getElementById('t-kit').innerText = t.kit;
+            document.getElementById('t-clear').innerText = t.clear;
+            document.querySelector('.cat-tab[onclick="filterMenu(\\'all\\')"]').innerText = t.all;
+            renderMenu(); renderCart();
         }
 
-        async function syncMenu() {
+        async function loadMenu() {
             const btn = document.getElementById('t-sync');
             btn.style.opacity = '0.5';
-            const { data } = await supabaseClient.from('products').select('*');
-            btn.style.opacity = '1';
             
-            if(data) {
-                document.getElementById('menu-grid').innerHTML = data.map(p => `
-                    <div class="card" onclick="addToCart('${p.name}', ${p.price})">
-                        <div class="card-icon">🍔</div>
-                        <div class="card-title">${p.name}</div>
-                        <div class="card-price">${p.price} ج</div>
-                    </div>
-                `).join('');
+            // سحب التصنيفات
+            const { data: cats } = await supabaseClient.from('categories').select('*');
+            if(cats) {
+                let catHTML = `<div class="cat-tab ${currentCategory === 'all' ? 'active' : ''}" onclick="filterMenu('all')">${dict[lang].all}</div>`;
+                cats.forEach(c => {
+                    catHTML += `<div class="cat-tab ${currentCategory === c.name ? 'active' : ''}" onclick="filterMenu('${c.name}')">${c.name}</div>`;
+                });
+                document.getElementById('cats-container').innerHTML = catHTML;
             }
+
+            // سحب المنتجات
+            const { data: prods } = await supabaseClient.from('products').select('*');
+            if(prods) {
+                allProducts = prods;
+                renderMenu();
+            }
+            btn.style.opacity = '1';
+        }
+
+        function filterMenu(catName) {
+            currentCategory = catName;
+            // تحديث شكل التصنيفات
+            document.querySelectorAll('.cat-tab').forEach(el => {
+                el.classList.remove('active');
+                if(el.innerText === catName || (catName === 'all' && el.innerText === dict[lang].all)) {
+                    el.classList.add('active');
+                }
+            });
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const grid = document.getElementById('menu-grid');
+            const filtered = currentCategory === 'all' ? allProducts : allProducts.filter(p => p.category === currentCategory);
+            
+            if(filtered.length === 0) {
+                grid.innerHTML = `<p style="text-align:center; grid-column:1/-1; color:#64748b;">لا يوجد أصناف في هذا القسم.</p>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => `
+                <div class="product-card" onclick="addToCart('${p.name}', ${p.price})">
+                    <div class="p-icon">🍔</div>
+                    <div class="p-name">${p.name}</div>
+                    <div class="p-price">${p.price} ${dict[lang].curr}</div>
+                </div>
+            `).join('');
         }
 
         function addToCart(n, p) { cart.push({n, p}); renderCart(); }
+        function clearCart() { cart = []; renderCart(); }
+        
         function renderCart() {
             const list = document.getElementById('cart-list');
-            if(!cart.length) { list.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top:20px; font-weight:bold">${dict[lang].empty}</div>`; document.getElementById('total-val').innerText = '0'; return; }
-            list.innerHTML = cart.map((i, idx) => `<div class="cart-item"><span>${i.n}</span><span>${i.p} <button onclick="cart.splice(${idx},1); renderCart()" style="color:red;border:none;background:none;cursor:pointer;font-size:16px">×</button></span></div>`).join('');
+            if(!cart.length) { 
+                list.innerHTML = `<div style="text-align:center; color:#94a3b8; font-weight:bold; margin-top:20px;">${dict[lang].empty}</div>`; 
+                document.getElementById('total-val').innerText = '0'; 
+                return; 
+            }
+            list.innerHTML = cart.map((i, idx) => `
+                <div class="cart-item">
+                    <span>${i.n}</span>
+                    <div>
+                        <span style="color:var(--primary); margin: 0 10px;">${i.p}</span>
+                        <button class="btn-remove" onclick="cart.splice(${idx},1); renderCart()">×</button>
+                    </div>
+                </div>`).join('');
             document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.p, 0);
         }
 
         async function checkout(status) {
-            if(!cart.length) return;
+            if(!cart.length) return alert(lang === 'ar' ? "السلة فارغة!" : "Cart is empty!");
             const total = cart.reduce((s, i) => s + i.p, 0);
             const items = cart.map(i => i.n).join(', ');
-            await supabaseClient.from('sales').insert([{ order_no: 'TK-'+Math.floor(Date.now()/1000), items, total, status }]);
-            cart = []; renderCart();
+            
+            const btn = document.getElementById(status === 'Completed' ? 't-pay' : 't-kit');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳...";
+            
+            const { error } = await supabaseClient.from('sales').insert([{ 
+                order_no: 'TK-' + Math.floor(1000 + Math.random() * 9000), 
+                items: items, total: total, status: status, order_type: 'Dine-in' 
+            }]);
+            
+            btn.innerText = originalText;
+            if(error) alert("Error: " + error.message);
+            else { clearCart(); }
         }
 
-        syncMenu(); renderCart();
+        // تشغيل أولي
+        loadMenu(); renderCart();
     </script>
 </body>
 </html>
