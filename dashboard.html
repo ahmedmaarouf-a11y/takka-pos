@@ -4,91 +4,66 @@
     <meta charset="UTF-8">
     <title>Takka Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background-color: #f8fafc; }
-        
-        /* Dark Sidebar */
         .sidebar { width: 250px; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; }
         .logo-area { padding: 20px; display: flex; align-items: center; gap: 10px; color: white; font-weight: 900; font-size: 22px; border-bottom: 1px solid #1e293b; }
-        .logo-area svg { width: 24px; height: 24px; fill: #38bdf8; }
-        
-        .nav-menu { padding-top: 10px; }
-        .nav-item { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
-        .nav-item:hover { color: white; }
-        .nav-item.active { background: #1e293b; color: white; border-left: 3px solid #38bdf8; }
-        .sub-menu { background: #0b1121; padding-left: 20px; display: none; }
+        .nav-item { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; }
+        .nav-item:hover, .nav-item.active { background: #1e293b; color: white; border-left: 3px solid #38bdf8; }
+        .sub-menu { background: #0b1121; display: none; }
         .sub-menu.open { display: block; }
-        .sub-item { padding: 10px 20px; cursor: pointer; font-size: 13px; }
-        .sub-item:hover { color: white; }
-        .sub-item.active { color: white; font-weight: bold; }
-
-        /* Main Area */
-        .main-area { flex: 1; display: flex; flex-direction: column; }
+        .sub-item { padding: 10px 20px 10px 40px; cursor: pointer; font-size: 13px; }
+        .sub-item:hover, .sub-item.active { color: #38bdf8; font-weight: bold; }
         
-        /* Top Navbar */
+        .main-area { flex: 1; display: flex; flex-direction: column; }
         .topbar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .status-dot { display: flex; align-items: center; gap: 8px; color: #10b981; font-weight: bold; font-size: 13px; }
-        .status-dot span { width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
-        .top-btns { display: flex; gap: 10px; }
-        .btn-lang { border: 1px solid #e2e8f0; background: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        .btn-proc { background: #eff6ff; color: #2563eb; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; }
-
-        /* Content Area */
-        .content { padding: 40px; }
+        .status-dot { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; }
+        .dot.processing { background: #f59e0b; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        
+        .content { padding: 40px; overflow-y: auto; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header-row h1 { margin: 0; color: #0f172a; font-size: 24px; }
         .action-btns { display: flex; gap: 10px; }
-        .btn-gray { background: #64748b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;}
-        .btn-green { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;}
-        .btn-blue { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;}
-
-        /* Table Area */
-        .data-area { text-align: center; padding: 50px; color: #475569; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: left; }
-        th, td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; font-weight: 600; color: #334155; }
+        .btn-gray { background: #64748b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-green { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-blue { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        
+        .data-area { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-area">
-            <svg viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h14v-8h3L12 2z"/></svg> TAKKA
+        <div class="logo-area">TAKKA Admin</div>
+        <div class="nav-item active" onclick="switchSection('Overview')">Overview</div>
+        <div class="nav-item" onclick="document.getElementById('sm').classList.toggle('open')">Menu Mgmt ▼</div>
+        <div class="sub-menu open" id="sm">
+            <div class="sub-item" onclick="switchSection('Products')">Products</div>
+            <div class="sub-item" onclick="switchSection('Categories')">Categories</div>
         </div>
-        <div class="nav-menu">
-            <div class="nav-item" onclick="showSection('Overview')">Overview</div>
-            
-            <div class="nav-item active" onclick="toggleSub('menu-sub')">Menu Mgmt ▼</div>
-            <div class="sub-menu open" id="menu-sub">
-                <div class="sub-item" onclick="showSection('Products')">Products</div>
-                <div class="sub-item active" onclick="showSection('Categories')">Categories</div>
-            </div>
-
-            <div class="nav-item" onclick="showSection('Reports')">Reports ▼</div>
-        </div>
+        <div class="nav-item" onclick="switchSection('Reports')">Reports</div>
     </div>
 
     <div class="main-area">
         <div class="topbar">
-            <div class="status-dot"><span></span> Live Updating</div>
-            <div class="top-btns">
-                <button class="btn-lang">العربية</button>
-                <button class="btn-proc">Processing...</button>
-            </div>
+            <div class="status-dot" id="sys-status"><div class="dot" id="sys-dot"></div> <span id="sys-text">Live Updating</span></div>
+            <button style="background:none; border:1px solid #ddd; padding:5px 15px; border-radius:5px; cursor:pointer" onclick="alert('واجهة الإدارة متوفرة بالإنجليزية لسهولة تصدير البيانات')">العربية</button>
         </div>
 
         <div class="content">
             <div class="header-row">
-                <h1 id="page-title">Categories</h1>
-                <div class="action-btns" id="action-buttons">
-                    <button class="btn-gray">Import (CSV)</button>
-                    <button class="btn-green">Export (CSV)</button>
-                    <button class="btn-blue" onclick="addMockData()">Add Category</button>
-                </div>
+                <h1 id="page-title">Overview</h1>
+                <div class="action-btns" id="action-buttons"></div>
             </div>
+            <input type="file" id="csv-file" style="display:none" accept=".csv" onchange="handleCSVUpload(event)">
             
             <div class="data-area" id="data-container">
-                No data.
+                <h2>System Status: Active</h2>
             </div>
         </div>
     </div>
@@ -97,69 +72,108 @@
         const SB_URL = "https://rcsssyzajtqwyqzcjglx.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3NzeXphanRxd3lxemNqZ2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDM3MDAsImV4cCI6MjA5MjAxOTcwMH0.m2typ0cHiAQ5K9SdJ6YaVVEIrP-8s0Z3saVA4zuBYwE";
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+        let currentSection = 'Overview';
 
-        function toggleSub(id) {
-            const el = document.getElementById(id);
-            el.classList.toggle('open');
+        // تغيير حالة النظام
+        function setProcessing(isProcessing) {
+            const dot = document.getElementById('sys-dot');
+            const txt = document.getElementById('sys-text');
+            if(isProcessing) { dot.classList.add('processing'); txt.innerText = 'Processing...'; }
+            else { dot.classList.remove('processing'); txt.innerText = 'Live Updating'; }
         }
 
-        function showSection(section) {
+        function switchSection(section) {
+            currentSection = section;
             document.getElementById('page-title').innerText = section;
-            const container = document.getElementById('data-container');
+            document.querySelectorAll('.nav-item, .sub-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
             const btns = document.getElementById('action-buttons');
-            
-            if(section === 'Reports') {
-                btns.style.display = 'none';
-                loadReports();
-            } else if (section === 'Products') {
-                btns.style.display = 'flex';
-                btns.innerHTML = `<button class="btn-blue" onclick="promptAddProduct()">Add Product</button>`;
-                loadProducts();
+            if(section === 'Products') {
+                btns.innerHTML = `<button class="btn-gray" onclick="document.getElementById('csv-file').click()">Import (CSV)</button> <button class="btn-green" onclick="exportData('products')">Export (CSV)</button> <button class="btn-blue" onclick="addRecord('products')">Add Product</button>`;
+                loadData('products');
+            } else if(section === 'Categories') {
+                btns.innerHTML = `<button class="btn-gray" onclick="document.getElementById('csv-file').click()">Import (CSV)</button> <button class="btn-green" onclick="exportData('categories')">Export (CSV)</button> <button class="btn-blue" onclick="addRecord('categories')">Add Category</button>`;
+                loadData('categories');
+            } else if(section === 'Reports') {
+                btns.innerHTML = `<button class="btn-green" onclick="exportData('sales')">Export Sales</button>`;
+                loadData('sales');
             } else {
-                btns.style.display = 'flex';
-                btns.innerHTML = `<button class="btn-gray">Import (CSV)</button><button class="btn-green">Export (CSV)</button><button class="btn-blue">Add Category</button>`;
-                container.innerHTML = 'No data.';
+                btns.innerHTML = '';
+                document.getElementById('data-container').innerHTML = '<h2>Select a module from the left.</h2>';
             }
         }
 
-        async function loadReports() {
-            const { data } = await supabaseClient.from('sales').select('*').order('created_at', {ascending: false});
-            const container = document.getElementById('data-container');
-            if(!data || data.length === 0) { container.innerHTML = 'No sales data yet.'; return; }
+        async function loadData(table) {
+            setProcessing(true);
+            const { data } = await supabaseClient.from(table).select('*').order('id', {ascending: false});
+            setProcessing(false);
             
-            let tableHTML = `<table><thead><tr><th>Order No</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>`;
+            const cont = document.getElementById('data-container');
+            if(!data || data.length === 0) { cont.innerHTML = 'No data.'; return; }
+
+            let html = `<table><thead><tr>`;
+            Object.keys(data[0]).forEach(k => { if(k !== 'id') html += `<th>${k}</th>`; });
+            html += `<th>Action</th></tr></thead><tbody>`;
+            
             data.forEach(row => {
-                tableHTML += `<tr><td>${row.order_no}</td><td>${row.items}</td><td>${row.total}</td><td>${row.status}</td></tr>`;
+                html += `<tr>`;
+                Object.keys(row).forEach(k => { if(k !== 'id') html += `<td>${row[k]}</td>`; });
+                if(table !== 'sales') html += `<td><button onclick="delRecord('${table}', ${row.id})" style="color:red;border:none;background:none;cursor:pointer">Delete</button></td>`;
+                else html += `<td>-</td>`;
+                html += `</tr>`;
             });
-            tableHTML += `</tbody></table>`;
-            container.innerHTML = tableHTML;
+            cont.innerHTML = html + `</tbody></table>`;
         }
 
-        async function loadProducts() {
-            const { data } = await supabaseClient.from('products').select('*');
-            const container = document.getElementById('data-container');
-            if(!data || data.length === 0) { container.innerHTML = 'No products found.'; return; }
-
-            let tableHTML = `<table><thead><tr><th>Name</th><th>Price</th><th>Action</th></tr></thead><tbody>`;
-            data.forEach(row => {
-                tableHTML += `<tr><td>${row.name}</td><td>${row.price} EGP</td><td><button onclick="delProd(${row.id})" style="color:red; border:none; background:none; cursor:pointer;">Delete</button></td></tr>`;
-            });
-            tableHTML += `</tbody></table>`;
-            container.innerHTML = tableHTML;
-        }
-
-        async function promptAddProduct() {
-            let name = prompt("Enter product name:");
-            let price = prompt("Enter price:");
-            if(name && price) {
-                await supabaseClient.from('products').insert([{ name, price }]);
-                loadProducts();
+        async function addRecord(table) {
+            if(table === 'products') {
+                let name = prompt("Product Name:"); let price = prompt("Price:");
+                if(name && price) await supabaseClient.from(table).insert([{name, price}]);
+            } else if (table === 'categories') {
+                let name = prompt("Category Name:");
+                if(name) await supabaseClient.from(table).insert([{name}]);
             }
+            loadData(table);
         }
 
-        async function delProd(id) {
-            await supabaseClient.from('products').delete().eq('id', id);
-            loadProducts();
+        async function delRecord(table, id) {
+            setProcessing(true);
+            await supabaseClient.from(table).delete().eq('id', id);
+            loadData(table);
+        }
+
+        // --- نظام الـ CSV (تصدير واستيراد) ---
+        async function exportData(table) {
+            setProcessing(true);
+            const { data } = await supabaseClient.from(table).select('*');
+            setProcessing(false);
+            if(!data || data.length === 0) return alert("لا يوجد بيانات لتصديرها");
+            
+            // تحويل الداتا لـ CSV وتحميلها
+            const csv = Papa.unparse(data);
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], {type: "text/csv;charset=utf-8"});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${table}_export.csv`;
+            link.click();
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            setProcessing(true);
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: async function(results) {
+                    const table = currentSection.toLowerCase();
+                    const { error } = await supabaseClient.from(table).insert(results.data);
+                    setProcessing(false);
+                    if(error) alert("خطأ في الاستيراد: " + error.message);
+                    else { alert("تم رفع البيانات بنجاح!"); loadData(table); }
+                    event.target.value = ''; // Reset file input
+                }
+            });
         }
     </script>
 </body>
